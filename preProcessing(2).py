@@ -18,10 +18,7 @@ def create_lexicon(pos,neg):
 		contents = f.readlines()
 		for l in contents[:hm_lines]:
 			all_words = word_tokenize(l)
-			print("tokenize")
-			print(all_words)
 			lexicon += list(all_words)
-			print(list(all_words))
 
 	with open(neg,'r') as f:
 		contents = f.readlines()
@@ -60,6 +57,7 @@ def sample_handling(sample,lexicon,classification):
 			features = list(features)
 			featureset.append([features,classification])
 
+	print(featureset)
 	return featureset
 
 #Splits the sample into traning and text sets

@@ -18,8 +18,10 @@ def preprocess():
     # load file from doc
     enron1 = load_files(r"email_data/enron1")
 
+
     # X will contain the sentences and the target will be their categories.
-    sent, actualVec = enron1.data, enron1.target
+    sent, actualVec = enron1.data[0:500], enron1.target[0:500]
+    # sent, actualVec = enron1.data, enron1.target
 
     # verify the length of the document, it should be 33716.
     print(len(sent))
@@ -69,7 +71,7 @@ def preprocess():
 
     return (documents,actualVec)
 
-def futherProcessForNN(documents):
+def lexiconProcessForNN(documents):
 
     print("-----------------------------")
     print("Currently process lexicon for Neural Network")
@@ -114,7 +116,7 @@ def spiltTestSets(documents, acturalVec):
     freqVec = wordToTFIDF(documents)
 
     from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(freqVec, acturalVec, test_size=0.3, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(freqVec, acturalVec, test_size=0.3, random_state=5)
 
     return (X_train,X_test,y_train,y_test)
 
@@ -190,13 +192,142 @@ def randomForest(X_train,X_test,y_train,y_test):
 # #
 # #
 
+
+# The random seed for this NNSplitSets are same with spiltTestSets
+# it will generate the different content (one is vector and another is text)
+# with same order, therefore, it can sure all the test / train data are the same.
+# it has been verified that can produce same result several times.
+def NNSplitSets(processedDoc, acturalVec):
+
+    from sklearn.model_selection import train_test_split
+    NN_X_train,NN_X_test,NN_y_train,NN_y_test = train_test_split(processedDoc, acturalVec, test_size=0.3, random_state=5)
+
+    return (NN_X_train,NN_X_test,NN_y_train,NN_y_test)
+
+
+def determineFeature(NN_X_train,NN_X_test,NN_y_train,NN_y_test, lexicon):
+
+    print("--------------- Process with features --------------- ")
+    #convet to list
+    NN_X_train = list(NN_X_train)
+    NN_X_test = list(NN_X_test)
+    NN_y_train = list(NN_y_train)
+    NN_y_test = list(NN_y_test)
+
+
+    #shuffle is not needed, because this document uses the resources from the first test_train split.
+    #lemmatizer is no longer needed, the sentences has being processed at the pre-processing phase.
+
+    Trainfeatures = []
+    TrainfeatureRes = []
+    Testfeatures = []
+    TestfeatureRes = []
+
+    #process for train sets
+    for index in range(len(NN_X_train)):
+
+        if(index % 3000 == 0):
+            print("TrainSet progress: ", (index / len(NN_X_train)) * 100, "%")
+
+        #ham
+        if(NN_y_train[index] == 0):
+
+            feature = NNsample_Handling(NN_X_train[index], lexicon, [1,0])
+
+
+        elif (NN_y_train[index] == 1):
+
+            feature = NNsample_Handling(NN_X_train[index], lexicon, [0,1])
+
+        Trainfeatures.append(feature[0])
+        TrainfeatureRes.append(feature[1])
+
+
+    #process for test_sets
+    for index in range(len(NN_X_test)):
+
+        if(index % 3000 == 0):
+            print("TestSet progress: ", (index / len(NN_X_test)) * 100, "%")
+
+        if(NN_y_test[index] == 0):
+
+            feature = NNsample_Handling(NN_X_test[index], lexicon, [1,0])
+        elif(NN_y_test[index] == 1):
+
+            feature = NNsample_Handling(NN_X_test[index], lexicon, [0,1])
+
+
+        Testfeatures.append(feature[0])
+        TestfeatureRes.append(feature[1])
+
+    print("Feature Process Done")
+    print("------------   END  -----------------")
+
+    return (list(Trainfeatures), list(TrainfeatureRes), list(Testfeatures), list(TestfeatureRes))
+
+
+def NNsample_Handling(sents, lexicon, classification):
+
+    import numpy as np
+
+    words = word_tokenize(sents)
+    # the word are being processed previously in the pre-processing part
+    features = np.zeros(len(lexicon))
+
+    for text in words:
+        if text in lexicon:
+            index_value = lexicon.index(text)
+            features[index_value] += 1
+
+    features = list(features)
+
+    return [features,classification]
+
+def Verification(y_train, y_test, NN_y_train, NN_y_test):
+
+    if (len(y_train) == len(NN_y_train) and len(NN_y_test) == len(y_test)):
+
+        for index in range(len(y_train)):
+            if NN_y_train[index][1] != y_train[index]:
+                print("------------ ERROR: Train answer did not match")
+                return -1
+
+
+        for index in range(len(y_test)):
+            if NN_y_test[index][1] != y_test[index]:
+                print("------------ ERROR: Test answer did not match")
+                return -1
+
+    else:
+        print("------------------- ERROR: size is different for two sets")
+        return -1
+
+    print("Size and Content Test Passed...")
+    return 1
+
 if __name__ == '__main__':
     (processedDoc, acturalVec) = preprocess()
     (X_train,X_test,y_train,y_test) = spiltTestSets(processedDoc, acturalVec)
-    naiveBayes(X_train,X_test,y_train,y_test)
-    randomForest(X_train,X_test,y_train,y_test)
+
+    # naiveBayes(X_train,X_test,y_train,y_test)
+    # randomForest(X_train,X_test,y_train,y_test)
+
+
+    lexicon = lexiconProcessForNN(processedDoc)
+    (NN_X_train,NN_X_test,NN_y_train,NN_y_test) = NNSplitSets(processedDoc, acturalVec)
+    (Trainfeatures, TrainfeatureRes, Testfeatures, TestfeatureRes) = determineFeature(NN_X_train,NN_X_test,NN_y_train,NN_y_test,lexicon)
+    res = Verification(y_train,y_test,TrainfeatureRes, TestfeatureRes)
+
+    if(res == 1):
+        # only continue with passed result
+        with open('pickles/regularAlgorithms.pickle','wb') as f:
+            pickle.dump([X_train,X_test,y_train,y_test],f)
+
+        with open('pickles/NNAlgorithms.pickle', 'wb') as f2:
+            pickle.dump([Trainfeatures, TrainfeatureRes, Testfeatures, TestfeatureRes],f2)
 
 
 
 
-    # futherProcessForNN(processedDoc)
+
+
