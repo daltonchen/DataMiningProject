@@ -6,6 +6,7 @@ from collections import Counter
 
 nltk.download('stopwords')
 import pickle
+# import _pickle as cPickle
 from nltk.corpus import stopwords
 
 
@@ -20,8 +21,8 @@ def preprocess():
 
 
     # X will contain the sentences and the target will be their categories.
-    # sent, actualVec = enron1.data[0:500], enron1.target[0:500]
-    sent, actualVec = enron1.data, enron1.target
+    sent, actualVec = enron1.data[0:500], enron1.target[0:500]
+    # sent, actualVec = enron1.data, enron1.target
 
     # verify the length of the document, it should be 33716.
     print(len(sent))
@@ -119,78 +120,6 @@ def spiltTestSets(documents, acturalVec):
     X_train, X_test, y_train, y_test = train_test_split(freqVec, acturalVec, test_size=0.3, random_state=5)
 
     return (X_train,X_test,y_train,y_test)
-
-def naiveBayes(X_train,X_test,y_train,y_test):
-
-    print("\n------------NAIVE BAYES -----------------")
-
-    import datetime
-    starttime = datetime.datetime.now()
-
-    from sklearn.naive_bayes import GaussianNB
-    classifier = GaussianNB()
-
-    #train data
-    classifier.fit(X_train, y_train)
-
-    #test data
-    y_pred = classifier.predict(X_test)
-
-    from sklearn.metrics import classification_report, confusion_matrix, accuracy_score,f1_score
-    print(confusion_matrix(y_test,y_pred))
-    print(classification_report(y_test,y_pred))
-    print("F-Score: ",f1_score(y_test,y_pred))
-    print("accuracy: ",accuracy_score(y_test, y_pred))
-
-    endtime = datetime.datetime.now()
-    print("Time elapsed: ", endtime - starttime)
-    print("------------   END  -----------------")
-
-
-def randomForest(X_train,X_test,y_train,y_test):
-
-    print("\n------------RANDOM FOREST -----------------")
-
-    import datetime
-    starttime = datetime.datetime.now()
-
-    from sklearn.ensemble import RandomForestClassifier
-    classifier = RandomForestClassifier(n_estimators=1000, random_state=0)
-
-    #train data
-    classifier.fit(X_train, y_train)
-
-    #test data
-    y_pred = classifier.predict(X_test)
-
-    from sklearn.metrics import classification_report, confusion_matrix, accuracy_score,f1_score
-    print(confusion_matrix(y_test,y_pred))
-    print(classification_report(y_test,y_pred))
-    print("F-Score: ",f1_score(y_test,y_pred))
-    print("accuracy: ",accuracy_score(y_test, y_pred))
-
-    endtime = datetime.datetime.now()
-    print("Time elapsed: ", endtime - starttime)
-    print("------------   END  -----------------")
-
-
-
-# # #
-# # # '''Save the model for later use using pickle'''
-# # with open('text_classifier', 'wb') as picklefile:
-# #     pickle.dump(classifier,picklefile)
-# # #
-# # # '''Retrieve the model and use it.'''
-# # with open('text_classifier', 'rb') as training_model:
-# #     model = pickle.load(training_model)
-# # y_pred2 = classifier.predict(X_test)
-# # #
-# # print(confusion_matrix(y_test, y_pred2))
-# # print(classification_report(y_test, y_pred2))
-# # print(accuracy_score(y_test, y_pred2))
-# #
-# #
-# #
 
 
 # The random seed for this NNSplitSets are same with spiltTestSets
@@ -312,10 +241,6 @@ if __name__ == '__main__':
     print("X_Train Size: ",len(X_train))
     print("X_Test Size: ",len(X_test))
 
-    # naiveBayes(X_train,X_test,y_train,y_test)
-    # randomForest(X_train,X_test,y_train,y_test)
-
-
     lexicon = lexiconProcessForNN(processedDoc)
     (NN_X_train,NN_X_test,NN_y_train,NN_y_test) = NNSplitSets(processedDoc, acturalVec)
     (Trainfeatures, TrainfeatureRes, Testfeatures, TestfeatureRes) = determineFeature(NN_X_train,NN_X_test,NN_y_train,NN_y_test,lexicon)
@@ -325,48 +250,59 @@ if __name__ == '__main__':
         # only continue with passed result
 
         print("--------- DUMP FILES ---------")
+        from sklearn.externals import joblib
 
         print("1. X_TRAIN : START")
-        with open('pickles/regularAlgorithms_X_TRAIN.pickle','wb') as f:
-            pickle.dump(X_train,f)
+        joblib.dump(X_train, 'pickles/regularAlgorithms_X_TRAIN.pkl')
         print("   X_TRAIN : FINISHED")
 
         print("2. X_TEST : START")
-        with open('pickles/regularAlgorithms_X_TEST.pickle', 'wb') as f:
-            pickle.dump(X_test, f)
+        joblib.dump(X_test, 'pickles/regularAlgorithms_X_TEST.pkl')
         print("   X_TEST : FINISHED")
 
         print("3. Y_TRAIN : START")
-        with open('pickles/regularAlgorithms_Y_TRAIN.pickle', 'wb') as f:
-            pickle.dump(y_train, f)
+        joblib.dump(y_train, 'pickles/regularAlgorithms_Y_TRAIN.pkl')
         print("   Y_TRAIN : FINISHED")
 
         print("4. Y_TEST : START")
-        with open('pickles/regularAlgorithms_Y_TEST.pickle', 'wb') as f:
-            pickle.dump(y_test, f)
+        joblib.dump(y_test, 'pickles/regularAlgorithms_Y_TEST.pkl')
         print("   Y_TEST : FINISHED")
 
+
+
         print("5. NN_X_TRAIN : START")
-        with open('pickles/NNAlgorithms_X_TRAIN.pickle', 'wb') as f2:
-            pickle.dump(Trainfeatures,f2)
+        joblib.dump(Trainfeatures, 'pickles/NN_X_train.pkl')
         print("   NN_X_TRAIN : FINISHED")
 
-        print("6. NN_X_TEST : START")
-        with open('pickles/NNAlgorithms_X_TEST.pickle', 'wb') as f2:
-            pickle.dump(Testfeatures,f2)
-        print("   NN_X_TEST : FINISHED")
 
-        print("7. NN_Y_TRAIN : START")
-        with open('pickles/NNAlgorithms_Y_TRAIN.pickle', 'wb') as f2:
-            pickle.dump(TrainfeatureRes,f2)
+        print("6. NN_Y_TRAIN : START")
+        joblib.dump(TrainfeatureRes, 'pickles/NN_Y_train.pkl')
         print("   NN_Y_TRAIN : FINISHED")
 
+
+        print("7. NN_X_TEST : START")
+        joblib.dump(Testfeatures, 'pickles/NN_X_Test.pkl')
+        print("   NN_X_TEST : FINISHED")
+
         print("8. NN_Y_TEST : START")
-        with open('pickles/NNAlgorithms_Y_TEST.pickle', 'wb') as f2:
-            pickle.dump(TestfeatureRes,f2)
+        joblib.dump(TestfeatureRes, 'pickles/NN_Y_Test.pkl')
         print("   NN_Y_TEST : FINISHED")
 
-        print("--------- END ---------")
+
+        print("--------- Pre-Processing Finished ---------")
+        print("Please use normalAlgorithms.py and NeuralNetwork.py to perform test")
+        print("Those two .py document need to under the same folder")
+
+
+
+
+
+
+
+
+
+
+
 
 
 

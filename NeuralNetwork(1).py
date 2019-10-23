@@ -1,5 +1,5 @@
 # Adopted from https://pythonprogramming.net/train-test-tensorflow-deep-learning-tutorial/
-from preProcessingText import create_feature_sets_and_labels
+# from preProcessingText import create_feature_sets_and_labels
 import tensorflow as tf
 import pickle
 import numpy as np
@@ -7,8 +7,22 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # train_x, train_y, test_x, test_y = create_feature_sets_and_labels('data/sentiment2/pos.txt', 'data/sentiment2/neg.txt')
-pickle_in = open('data/sentiment2/sentiment_set.pickle','rb')
-train_x, train_y, test_x, test_y = pickle.load(pickle_in)
+
+
+from sklearn.externals import joblib
+
+# pickle_in = open('pickles/test.pickle','rb')
+# (train_x, train_y, test_x, test_y) = joblib.load('pickles/joblibtest.pkl')
+train_x = joblib.load('pickles/NN_X_train.pkl')
+train_y = joblib.load('pickles/NN_Y_train.pkl')
+test_x = joblib.load('pickles/NN_X_Test.pkl')
+test_y = joblib.load('pickles/NN_Y_Test.pkl')
+
+print(len(train_x))
+print(len(train_y))
+print(len(test_x))
+print(len(test_y))
+
 n_nodes_hl1 = 1500
 n_nodes_hl2 = 1500
 n_nodes_hl3 = 1500
@@ -53,8 +67,15 @@ def neural_network_model(data):
     return output
 
 
+
+
+
 # Train the network by calculating the error and adjusting the weights hm_epochs number of times.
 def train_neural_network(x):
+
+    import datetime
+    starttime = datetime.datetime.now()
+
     prediction = neural_network_model(x)
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=y))
     optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(cost)
@@ -77,11 +98,41 @@ def train_neural_network(x):
                 i += batch_size
 
             print('Epoch', epoch + 1, 'completed out of', hm_epochs, 'loss:', epoch_loss)
+
+        #print out accuracy
         correct = tf.equal(tf.argmax(prediction, 1), tf.argmax(y, 1))
         accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
+        print('Accuracy: ', accuracy.eval({x: test_x, y: test_y}))
 
-        print('Accuracy:', accuracy.eval({x: test_x, y: test_y}))
+        print("------------------ Evaluation ---------------------")
+        print("Perfoming test...")
+        pred = []
 
+        count = 0;
+        for data in test_x:
+
+            if(count % 3000 == 0):
+                print("Current Progress: ", count / len(test_x) * 100, "%")
+
+            result = (sess.run(tf.argmax(prediction.eval(feed_dict={x: [data]}), 1)))
+            pred.append(result[0])
+            count += 1
+
+        print("Extract Actual Value...")
+        actural = []
+        for element in test_y:
+            actural.append(element[1])
+
+        from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
+        print(confusion_matrix(actural,pred))
+        print(classification_report(actural,pred))
+        print("F-Score: ",f1_score(actural,pred,average='weighted'))
+        print("accuracy: ",accuracy_score(actural, pred))
+
+        endtime = datetime.datetime.now()
+        print("Time elapsed: ", endtime - starttime)
+        print("------------------ END ---------------------")
+        print("Please verify two accuracy to see if they matches each other.")
 
 train_neural_network(x)
 
