@@ -20,8 +20,8 @@ def preprocess():
 
 
     # X will contain the sentences and the target will be their categories.
-    sent, actualVec = enron1.data[0:500], enron1.target[0:500]
-    # sent, actualVec = enron1.data, enron1.target
+    # sent, actualVec = enron1.data[0:500], enron1.target[0:500]
+    sent, actualVec = enron1.data, enron1.target
 
     # verify the length of the document, it should be 33716.
     print(len(sent))
@@ -309,6 +309,9 @@ if __name__ == '__main__':
     (processedDoc, acturalVec) = preprocess()
     (X_train,X_test,y_train,y_test) = spiltTestSets(processedDoc, acturalVec)
 
+    print("X_Train Size: ",len(X_train))
+    print("X_Test Size: ",len(X_test))
+
     # naiveBayes(X_train,X_test,y_train,y_test)
     # randomForest(X_train,X_test,y_train,y_test)
 
@@ -320,11 +323,50 @@ if __name__ == '__main__':
 
     if(res == 1):
         # only continue with passed result
-        with open('pickles/regularAlgorithms.pickle','wb') as f:
-            pickle.dump([X_train,X_test,y_train,y_test],f)
 
-        with open('pickles/NNAlgorithms.pickle', 'wb') as f2:
-            pickle.dump([Trainfeatures, TrainfeatureRes, Testfeatures, TestfeatureRes],f2)
+        print("--------- DUMP FILES ---------")
+
+        print("1. X_TRAIN : START")
+        with open('pickles/regularAlgorithms_X_TRAIN.pickle','wb') as f:
+            pickle.dump(X_train,f)
+        print("   X_TRAIN : FINISHED")
+
+        print("2. X_TEST : START")
+        with open('pickles/regularAlgorithms_X_TEST.pickle', 'wb') as f:
+            pickle.dump(X_test, f)
+        print("   X_TEST : FINISHED")
+
+        print("3. Y_TRAIN : START")
+        with open('pickles/regularAlgorithms_Y_TRAIN.pickle', 'wb') as f:
+            pickle.dump(y_train, f)
+        print("   Y_TRAIN : FINISHED")
+
+        print("4. Y_TEST : START")
+        with open('pickles/regularAlgorithms_Y_TEST.pickle', 'wb') as f:
+            pickle.dump(y_test, f)
+        print("   Y_TEST : FINISHED")
+
+        print("5. NN_X_TRAIN : START")
+        with open('pickles/NNAlgorithms_X_TRAIN.pickle', 'wb') as f2:
+            pickle.dump(Trainfeatures,f2)
+        print("   NN_X_TRAIN : FINISHED")
+
+        print("6. NN_X_TEST : START")
+        with open('pickles/NNAlgorithms_X_TEST.pickle', 'wb') as f2:
+            pickle.dump(Testfeatures,f2)
+        print("   NN_X_TEST : FINISHED")
+
+        print("7. NN_Y_TRAIN : START")
+        with open('pickles/NNAlgorithms_Y_TRAIN.pickle', 'wb') as f2:
+            pickle.dump(TrainfeatureRes,f2)
+        print("   NN_Y_TRAIN : FINISHED")
+
+        print("8. NN_Y_TEST : START")
+        with open('pickles/NNAlgorithms_Y_TEST.pickle', 'wb') as f2:
+            pickle.dump(TestfeatureRes,f2)
+        print("   NN_Y_TEST : FINISHED")
+
+        print("--------- END ---------")
 
 
 
