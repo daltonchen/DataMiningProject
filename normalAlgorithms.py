@@ -18,7 +18,7 @@ def randomForest(X_train,X_test,y_train,y_test):
     starttime = datetime.datetime.now()
 
     from sklearn.ensemble import RandomForestClassifier
-    classifier = RandomForestClassifier(n_estimators=1000, random_state=0)
+    classifier = RandomForestClassifier(n_estimators=2000, random_state=0)
 
     #train data
     classifier.fit(X_train, y_train)
